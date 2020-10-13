@@ -6,11 +6,19 @@ import (
 	"os"
 	"log"
 	"strings"
+	"strconv"
 )
 
 func processEntity(line string, entity *[]CENT, entityNum int32) {
-	cnt, _ := fmt.Sscanf(line,"%s %[^\t\n]s",(*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Name,(*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Value)
+	cnt, err := fmt.Sscanf(line,"%q %q",&(*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Name,&(*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Value)
+	if (err != nil){
+		log.Fatal(err)
+	}	
 	if (cnt == 2) {
+		// "%s %[^\t\n]s" workaround --start--
+		strconv.Quote((*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Name)
+		strconv.Quote((*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Value)
+		// "%s %[^\t\n]s" workaround --end--
 		if ((*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Name == "\"classname\"") {
 			(*entity)[entityNum].ClassName = (*entity)[entityNum].Values[(*entity)[entityNum].ValueCnt].Value
 		}
@@ -20,14 +28,48 @@ func processEntity(line string, entity *[]CENT, entityNum int32) {
 	}
 }
 
-func processBrush(line string) {
+func processBrush(line string, brush *[]CBRUSH, tmpBrush *[]CBRUSH, brushNum int32, fl *[3]float32, num *[3]int32, TexelDup *[]CTEX, header *CHEAD) {
+	//parse main line into tmp struct
+	cnt, err := fmt.Sscanf(line,"( %d %d %d ) ( %d %d %d ) ( %d %d %d ) %s %d %d %f %f %f",&(*tmpBrush)[0].Planes[0],&(*tmpBrush)[0].Planes[1],&(*tmpBrush)[0].Planes[2],&(*tmpBrush)[0].Planes[3],&(*tmpBrush)[0].Planes[4],&(*tmpBrush)[0].Planes[5],&(*tmpBrush)[0].Planes[6],&(*tmpBrush)[0].Planes[7],&(*tmpBrush)[0].Planes[8],&(*tmpBrush)[0].Texel[0],&(*num)[0],&(*num)[1],&(*fl)[2],&(*fl)[0],&(*fl)[1])
+	if (err != nil){
+		log.Fatal(err)
+	}
+	if (cnt == 15){
+		//store planes
+		for i := 0; i<9; i++ {
+			(*brush)[brushNum].Planes[((*brush)[brushNum].PlaneCount*9) + uint8(i)] = (*tmpBrush)[0].Planes[i];
+		}
+		//check if it has valid face
+		if (strings.Contains((*tmpBrush)[0].Texel[0],"common/caulk") && strings.Contains((*tmpBrush)[0].Texel[0],"common/nodraw")){
+			//store face id
+			(*brush)[brushNum].Faces[(*brush)[brushNum].FaceCount] = (*brush)[brushNum].PlaneCount;
+			//store texel name
+			(*brush)[brushNum].Texel[(*brush)[brushNum].FaceCount] = (*tmpBrush)[0].Texel[0];
+			//store texel shift
+			(*brush)[brushNum].ShiftX[(*brush)[brushNum].FaceCount] = num[0];
+			(*brush)[brushNum].ShiftY[(*brush)[brushNum].FaceCount] = num[1];
+			//store texel scale
+			(*brush)[brushNum].ScaleX[(*brush)[brushNum].FaceCount] = fl[0];
+			(*brush)[brushNum].ScaleY[(*brush)[brushNum].FaceCount] = fl[1];
+			//update global texels array
+			(*TexelDup)[(*header).TexelCount].Path = (*tmpBrush)[0].Texel[0];
+			//upd tx cnt
+			(*header).TexelCount++;		
+			//upd struct fc cnt
+			(*brush)[brushNum].FaceCount++;
+		}
+		//upd plane num
+		(*brush)[brushNum].PlaneCount++;
 
+	} else {
+		fmt.Printf("bad_brush_format: %s\n",line);
+	}
 }
 
 func ParseMap(path string) string {
 
 	//vars
-	var isBrush, isEntity, entPart, ignoreBrush, i, j, k uint32 = 0,0,0,0,0,0,0;
+	var isBrush, isEntity, entPart, ignoreBrush, i, j, cnt, newTexelSize uint32 = 0,0,0,0,0,0,0,0;
 	var brushNum, entityNum int32 = -1, -1;
 	var fl [3]float32;
 	var num [3]int32;
@@ -114,23 +156,46 @@ func ParseMap(path string) string {
 			entity[entityNum].ID = uint32(entityNum);
 			entity[entityNum].ValueCnt = 0;
 			fmt.Printf("entity %d/%d\n",entityNum+1,header.EntityCount);
-		} else if (ignoreBrush == 0 && string(scanner.Text()[1]) == "("){
+		} else if (ignoreBrush == 0 && string(scanner.Text()[0:1]) == "("){
 			isBrush = 1;
-		} else if (entPart == 1 && string(scanner.Text()[1]) == "\""){
+		} else if (entPart == 1 && string(scanner.Text()[0:1]) == "\""){
 			isEntity = 1;
 
-		} else if (string(scanner.Text()[1]) == "}"){
+		} else if (string(scanner.Text()[0:1]) == "}"){
 			isBrush = 0;
 			isEntity = 0;
 		}
 
 		if (isBrush == 1){
-			processBrush(scanner.Text())
+			processBrush(string(scanner.Text()),&brush,&tmpBrush,brushNum,&fl,&num,&texelDup,&header)
 		} else if (isEntity == 1){
-			processEntity(scanner.Text(),&entity,entityNum)
+			processEntity(string(scanner.Text()),&entity,entityNum)
 		}
 	}
 
+	fmt.Printf("\n*** TEXTURES HANDLER ***\n\n");
+
+	//form unique texture list 
+	texelFinal := make([]CTEX,header.TexelCount)
+
+	for i,cnt = 0,0; i<header.TexelCount; i,cnt = i+1,0 {
+		for j = 0; j<newTexelSize; j,cnt = j+1,cnt+1{
+			if (texelDup[i].Path == texelFinal[j].Path) {
+				break;
+			}
+		}
+
+		if (cnt == newTexelSize){
+			texelFinal[newTexelSize].Path = texelDup[i].Path;
+			newTexelSize++;
+		}
+	}
+
+	fmt.Printf("total_vis_faces: %d\n",header.TexelCount);
+	fmt.Printf("total_unique_textures: %d\n",newTexelSize);
+
+    //now set proper unique texel count
+    header.TexelCount = newTexelSize;
 
 	return "q3parser called.\n"
 }

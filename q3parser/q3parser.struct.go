@@ -1,5 +1,8 @@
 package q3parser
 
+const MAXFACES = 6
+const ENTMAXVAL = 8
+
 type CHEAD struct {
 	BrushCount uint32
 	EntityCount uint32
@@ -14,23 +17,23 @@ type CBRUSH struct {
 	ID uint32
 	FaceCount uint8
 	PlaneCount uint8
-	Faces uint8
-	Vertices int32
-	Planes int32
-	Texel []string
-	ShiftX int32
-	ShiftY int32
-	ScaleX float32
-	ScaleY float32
-	Width uint32
-	Height uint32
-	StartX float64
-	StartY float64
-	StartZ float64
-	EndX float64
-	EndY float64
-	EndZ float64
-	DirectionCode uint8
+	Faces [MAXFACES]uint8
+	Vertices [12*MAXFACES]int32
+	Planes [9*MAXFACES]int32
+	Texel [MAXFACES]string
+	ShiftX [MAXFACES]int32
+	ShiftY [MAXFACES]int32
+	ScaleX [MAXFACES]float32
+	ScaleY [MAXFACES]float32
+	Width [MAXFACES]uint32
+	Height [MAXFACES]uint32
+	StartX [MAXFACES]float64
+	StartY [MAXFACES]float64
+	StartZ [MAXFACES]float64
+	EndX [MAXFACES]float64
+	EndY [MAXFACES]float64
+	EndZ [MAXFACES]float64
+	DirectionCode [MAXFACES]uint8
 }
 
 type CENTPROP struct {
@@ -42,5 +45,5 @@ type CENT struct {
 	ID uint32
 	ClassName string
 	ValueCnt uint8
-	Values []CENTPROP
+	Values [ENTMAXVAL]CENTPROP
 }
