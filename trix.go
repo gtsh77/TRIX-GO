@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	argc := len(os.Args)
 
 	if argc < 2 {

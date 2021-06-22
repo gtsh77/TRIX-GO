@@ -1,7 +1,7 @@
 package q3parser
 
 const (
-	MAXFACES = 6
+	MAXFACES  = 6
 	ENTMAXVAL = 8
 )
 

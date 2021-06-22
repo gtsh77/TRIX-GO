@@ -12,10 +12,10 @@ import (
 func ParseMap(path string) {
 
 	//vars
-	var	isBrush, isEntity, entPart, ignoreBrush, i, j, cnt, newTexelSize uint32 = 0, 0, 0, 0, 0, 0, 0, 0
-	var	brushNum, entityNum int32 = -1, -1
-	var	fl [3]float32
-	var	num [3]int32
+	var isBrush, isEntity, entPart, ignoreBrush, i, j, cnt, newTexelSize uint32 = 0, 0, 0, 0, 0, 0, 0, 0
+	var brushNum, entityNum int32 = -1, -1
+	var fl [3]float32
+	var num [3]int32
 
 	//alloc space for header
 	header := CHEAD{BrushCount: 0, TexelCount: 0, EntityCount: 0}
