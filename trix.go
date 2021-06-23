@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gtsh77/TRIX-GO/q3parser"
+	_ "github.com/gtsh77/TRIX-GO/mlib"
 	"os"
 )
 
