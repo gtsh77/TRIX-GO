@@ -1,6 +1,7 @@
 package mlib
 
 import (
+	"fmt"
 	"math"
 	M "github.com/dtromb/gogsl/matrix"
 	B "github.com/dtromb/gogsl/blas"
@@ -56,18 +57,36 @@ func GlmPerspective(fovy float64, aspect float64, zNear float64, zFar float64, R
 }
 
 //glm.lookAt (right-handed)
-// func GlmLookAt(eye *float64, center *float64, up *float64, R *M.GslMatrix) {
-// 	var f, s, u, SEC, CUF [3]float64
+func GlmLookAt(eye *[]float64, center *[]float64, up *[]float64, R *M.GslMatrix) {
+	var f, s, u, SEC, CUF []float64 = []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}
 
-// 	//tvec3<T, P> const f(normalize(center - eye));
+	//tvec3<T, P> const f(normalize(center - eye));
+	SubV(center, eye, 3, &SEC)
+	Normalize(&SEC, 3, &f)
+	//tvec3<T, P> const s(normalize(cross(f, up)));
+	CrossV3(&f, up, &CUF)
+	Normalize(&CUF, 3, &s)
+	//tvec3<T, P> const u(cross(s, f));
+	CrossV3(&s, &f, &u)
 
+	M.Set(R, 0, 0, s[0])
+	M.Set(R, 1, 0, s[1])
+	M.Set(R, 2, 0, s[2])
 
+	M.Set(R, 0, 1, u[0])
+	M.Set(R, 1, 1, u[1])
+	M.Set(R, 2, 1, u[2])
 
-// 	//tvec3<T, P> const s(normalize(cross(f, up)));
+	M.Set(R, 0, 2, -f[0])
+	M.Set(R, 1, 2, -f[1])
+	M.Set(R, 2, 2, -f[2])
 
-// 	//tvec3<T, P> const u(cross(s, f));
+	M.Set(R, 3, 0, -Scalar(&s,eye,3))
+	M.Set(R, 3, 1, -Scalar(&u,eye,3))
+	M.Set(R, 3, 2, Scalar(&f,eye,3))
 
-// }
+	M.Set(R, 3, 3, 1)
+}
 
 //+normalize [x]
 //+cross [x]
@@ -113,20 +132,72 @@ func GetVLen(vec *[]float64, size int) float64 {
 }
 
 //normalize single vector Xd
+func Normalize(vec *[]float64, size int, r *[]float64){
+	var len float64 = GetVLen(vec, size)
 
+	for i := 0; i < size; i++ {
+		if len == 0 {
+			(*r)[i] = 0 
+		} else {
+			(*r)[i] = (*vec)[i]/len
+		}
+	}
+}
 
 //"dot": scalar product of 2 Xd vectors
+func Scalar(vec1 *[]float64, vec2 *[]float64, size int) float64 {
+	var sum float64
+
+	for i := 0; i < size; i++ {
+		sum += (*vec1)[i] * (*vec2)[i]
+	}
+
+	return sum
+}
 
 //substart v1 from v2 Xd both
+func SubV(vec1 *[]float64, vec2 *[]float64, size int, r *[]float64){
+	for i := 0; i < size; i++ {
+		(*r)[i] = (*vec1)[i] - (*vec2)[i]
+	}	
+}
 
 //add v1 to v2 Xd both
+func AddV(vec1 *[]float64, vec2 *[]float64, size int, r *[]float64){
+	for i := 0; i < size; i++ {
+		(*r)[i] = (*vec1)[i] + (*vec2)[i]
+	}	
+}
 
 //mul by N vec
+func MulV(vec1 *[]float64, N float64, size int, r *[]float64){
+	for i := 0; i < size; i++ {
+		(*r)[i] = (*vec1)[i] * N
+	}	
+}
 
 //div by N vec
+func DivV(vec1 *[]float64, N float64, size int, r *[]float64){
+	for i := 0; i < size; i++ {
+		(*r)[i] = (*vec1)[i] / N
+	}	
+}
 
 //get cross of two 3d vectors
+func CrossV3(vec1 *[]float64, vec2 *[]float64, r *[]float64){
+	(*r)[0] = (((*vec1)[1] * (*vec2)[2]) - ((*vec1)[2] * (*vec2)[1]));
+	(*r)[1] = (((*vec1)[2] * (*vec2)[0]) - ((*vec1)[0] * (*vec2)[2]));
+	(*r)[2] = (((*vec1)[0] * (*vec2)[1]) - ((*vec1)[1] * (*vec2)[0]));
+}
 
 // ===== DEBUG =====
 
 //printf MxN matrix (debug)
+func PrintMatrix(ma *M.GslMatrix, m int, n int){
+	for i := 0; i < n; i++ {
+		fmt.Printf("\n")
+		for j := 0; j < m; j++ {
+			fmt.Printf("%.12f  ",M.Get(ma,i,j))
+		}
+	}
+}
