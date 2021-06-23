@@ -96,14 +96,72 @@ func GlmLookAt(eye *[]float64, center *[]float64, up *[]float64, R *M.GslMatrix)
 // ===== TRANSFORMATION =====
 
 //set translation coefs based on XYZ vector, opt transponse (row order / transponse for column)
+func SetT(m *M.GslMatrix, x float64, y float64, z float64, t bool){
+	M.Set(m, 3, 0, x)
+	M.Set(m, 3, 1, y)
+	M.Set(m, 3, 2, z)
+	if t == true {
+		M.Transpose(m)
+	}
+}
 
 //set scale coefs based on XYZ vector, opt transponse (row order / transponse for column)
+func SetSc(m *M.GslMatrix, x float64, y float64, z float64, t bool){
+	M.Set(m, 0, 0, x)
+	M.Set(m, 1, 1, y)
+	M.Set(m, 2, 2, z)
+	if t == true {
+		M.Transpose(m)
+	}
+}
+
+type Degree float64
+type Radian float64
+
+func (d Degree) RAD() float64 {
+	return float64(d * (math.Pi / 180.0))
+}
+
+func (r Radian) ZeroCheck() float64 {
+	if (r == 0) {
+		return float64(0)
+	} else {
+		return float64(r)
+	}
+}
 
 //set rotation by X coefs based on DEG, opt transponse (row order / transponse for column)
+func SetRx(m *M.GslMatrix, d Degree, t bool){
+	M.Set(m, 1, 1, Radian(math.Cos(d.RAD())).ZeroCheck())
+	M.Set(m, 2, 1, Radian(math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 1, 2, Radian(-math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 2, 2, Radian(math.Cos(d.RAD())).ZeroCheck())
+	if t == true {
+		M.Transpose(m)
+	}
+}
 
 //set rotation by Y coefs based on DEG, opt transponse (row order / transponse for column)
+func SetRy(m *M.GslMatrix, d Degree, t bool){
+	M.Set(m, 0, 0, Radian(math.Cos(d.RAD())).ZeroCheck())
+	M.Set(m, 0, 2, Radian(math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 2, 0, Radian(-math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 2, 2, Radian(math.Cos(d.RAD())).ZeroCheck())
+	if t == true {
+		M.Transpose(m)
+	}
+}
 
 //set rotation by Z coefs based on DEG, opt transponse (row order / transponse for column)
+func SetRz(m *M.GslMatrix, d Degree, t bool){
+	M.Set(m, 0, 0, Radian(math.Cos(d.RAD())).ZeroCheck())
+	M.Set(m, 0, 1, Radian(math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 1, 0, Radian(-math.Sin(d.RAD())).ZeroCheck())
+	M.Set(m, 1, 1, Radian(math.Cos(d.RAD())).ZeroCheck())
+	if t == true {
+		M.Transpose(m)
+	}
+}
 
 // ===== OPERATIONS =====
 
