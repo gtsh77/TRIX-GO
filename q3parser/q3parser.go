@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"strconv"
 	"strings"
-	"sort"
+	_ "sort"
 	"path/filepath"
 	"encoding/gob"
 	m "github.com/gtsh77/TRIX-GO/mlib"
@@ -348,26 +348,37 @@ func getShape(planes [9*MAXFACES]float64, pc uint8, faces [MAXFACES]int, fc uint
 
 	//get vertices
 	for i := uint8(0); i <  pc; i++ {
-		for j := uint8(0); j < pc; j++ {
-			for k := uint8(0); k < pc; k++ {
-				if i != j && i != k && j != k {
-					//get intersetion
-					GetIntersection(planes, i, j, k, intersection)
-					//show only used faces
-					flag := sort.SearchInts(faces[:], int(i))
-					if (flag > 0) {
+		//proccess only vis faces
+		if intIn(int(i), faces) {
+			for j := uint8(0); j < pc; j++ {
+				for k := uint8(0); k < pc; k++ {
+					if i != j && i != k && j != k {
+						//get intersetion
+						GetIntersection(planes, i, j, k, intersection)
 						//tmp chk if legal by denominator and x < 0
 						if (intersection[0] != -1 && intersection[0] >= 0) {
 							vertices[stored] = intersection[0]
 							vertices[stored+1] = intersection[1]
 							vertices[stored+2] = intersection[2]
 							stored += 3
-						}
+						}						
 					}
 				}
 			}
 		}
+
 	}
+}
+
+func intIn(i int, fa [MAXFACES]int) bool {
+	for _, v := range fa {
+		if v == i {
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
 }
 
 func SafeBytes(s interface{}) []byte {
