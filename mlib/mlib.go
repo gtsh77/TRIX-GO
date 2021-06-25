@@ -7,6 +7,21 @@ import (
 	"math"
 )
 
+type Degree float64
+type Radian float64
+
+func (d Degree) RAD() float64 {
+	return float64(d * (math.Pi / 180.0))
+}
+
+func (r Radian) ZeroCheck() float64 {
+	if r == 0 {
+		return float64(0)
+	} else {
+		return float64(r)
+	}
+}
+
 // ===== INITIALIZATION =====
 
 //new empty matrix MxN
@@ -112,21 +127,6 @@ func SetSc(m *M.GslMatrix, x float64, y float64, z float64, t bool) {
 	M.Set(m, 2, 2, z)
 	if t == true {
 		M.Transpose(m)
-	}
-}
-
-type Degree float64
-type Radian float64
-
-func (d Degree) RAD() float64 {
-	return float64(d * (math.Pi / 180.0))
-}
-
-func (r Radian) ZeroCheck() float64 {
-	if r == 0 {
-		return float64(0)
-	} else {
-		return float64(r)
 	}
 }
 
@@ -257,88 +257,5 @@ func PrintMatrix(ma *M.GslMatrix, m int, n int) {
 		for j := 0; j < m; j++ {
 			fmt.Printf("%.12f  ", M.Get(ma, i, j))
 		}
-	}
-}
-
-// ===== MAP =====
-//get normals and distances
-func GetND(points *[]float64, planeNum uint8, normals []float64, distances *float64) {
-	var a, b, c, ab, cb, normal, normal_n []float64 = []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}, []float64{0, 0, 0}
-	var distance float64
-
-	a[0] = (*points)[planeNum*9+0]
-	a[1] = (*points)[planeNum*9+1]
-	a[2] = (*points)[planeNum*9+2]
-
-	b[0] = (*points)[planeNum*9+3]
-	b[1] = (*points)[planeNum*9+4]
-	b[2] = (*points)[planeNum*9+5]
-
-	c[0] = (*points)[planeNum*9+6]
-	c[1] = (*points)[planeNum*9+7]
-	c[2] = (*points)[planeNum*9+8]
-
-	SubV(a, b, 3, ab)
-	SubV(c, b, 3, cb)
-	CrossV3(ab, cb, normal)
-	Normalize(normal, 3, normal_n)
-
-	distance = Scalar(normal_n, a, 3)
-	*distances = distance
-	normals[0] = normal_n[0]
-	normals[1] = normal_n[0]
-	normals[2] = normal_n[0]
-}
-
-//get intersection
-func GetIntersection(points *[]float64, i uint8, j uint8, k uint8, intersection []float64) {
-	var sum float64
-	var distances [3]float64
-	var n, t map[uint8][]float64
-
-	// use map instead of C array double normals[9], distances[3], tmp[30];
-	for i := range [9]uint8{} {
-		if i == 0 {
-			n, t = make(map[uint8][]float64), make(map[uint8][]float64)
-		}
-		if i < 3 {
-			n[uint8(i)] = []float64{0, 0, 0}
-		}
-		t[uint8(i)] = []float64{0, 0, 0}
-	}
-
-	//get normals and distances
-	GetND(points, i, n[0], &distances[0])
-	GetND(points, j, n[1], &distances[1])
-	GetND(points, k, n[2], &distances[2])
-
-	//calc intersection
-	CrossV3(n[1], n[2], t[0])
-	MulV(t[0], -distances[0], 3, t[1])
-
-	// //u p2
-	// //-d2*Cross(n3, n1)
-	CrossV3(n[2], n[0], t[2])
-	MulV(t[2], -distances[1], 3, t[3])
-
-	// //u p3
-	// //-d3*Cross(n1, n2)
-	CrossV3(n[0], n[1], t[4])
-	MulV(t[4], -distances[2], 3, t[5])
-
-	// //summ p1 p2 p3
-	AddV(t[1], t[3], 3, t[6])
-	AddV(t[6], t[5], 3, t[7])
-
-	// //denominator
-	sum = Scalar(n[0], t[0], 3)
-
-	//set
-	if sum == 0 {
-		intersection[0] = -1
-	} else {
-		intersection[0] = t[7][0]
-		intersection[1] = t[7][1]
-		intersection[2] = t[7][2]
 	}
 }

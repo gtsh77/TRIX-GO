@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/gtsh77/TRIX-GO/q3parser"
-	_ "github.com/gtsh77/TRIX-GO/mlib"
+	q "github.com/gtsh77/TRIX-GO/q3parser"
 	"os"
 )
 
@@ -25,7 +24,7 @@ func main() {
 			if argc < 3 {
 				fmt.Printf("specify map path\n")
 			} else {
-				q3parser.ParseMap(os.Args[2])
+				q.ParseMap(os.Args[2])
 			}
 		} else if *sm {
 			if argc < 3 {

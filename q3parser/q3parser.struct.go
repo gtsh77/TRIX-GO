@@ -3,6 +3,9 @@ package q3parser
 const (
 	MAXFACES  = 6
 	ENTMAXVAL = 8
+	MAXTEXDUP = 10000
+	CMAPDIR = "maps/"
+	CMAPEXT = ".cmap"	
 )
 
 type CHEAD struct {
@@ -15,8 +18,8 @@ type CBRUSH struct {
 	ID            uint32
 	FaceCount     uint8
 	PlaneCount    uint8
-	Faces         [MAXFACES]uint8
-	Vertices      [12 * MAXFACES]int32
+	Faces         [MAXFACES]int
+	Vertices      [12 * MAXFACES]float64
 	Planes        [9 * MAXFACES]int32
 	Texel         [MAXFACES]string
 	ShiftX        [MAXFACES]int32
