@@ -135,7 +135,7 @@ func ParseMap(path string) {
 		}
 
 		if isBrush == 1 {
-			processBrush(string(scanner.Text()), &brush, tmpBrush, brushNum, fl, num, texelDup, header)
+			processBrush(string(scanner.Text()), &brush, tmpBrush, brushNum, fl, num, &texelDup, &header)
 		} else if isEntity == 1 {
 			processEntity(string(scanner.Text()), &entity, entityNum)
 		}
@@ -181,17 +181,18 @@ func ParseMap(path string) {
 			brush[i].Vertices[j] = vertices[j]
 		}
 
-		//write bin
-		file2.Write(SafeBytes(header))
-		file2.Write(SafeBytes(texelFinal))
-		file2.Write(SafeBytes(brush))
-		file2.Write(SafeBytes(entity))
 		// w := bufio.NewWriterSize(file2,)
-		// n4, _ := w.Write(header)
+		// b, _ := w.Write(header)
 	}
+
+	//write bin
+	file2.Write(SafeBytes(header))
+	file2.Write(SafeBytes(texelFinal))
+	file2.Write(SafeBytes(brush))
+	file2.Write(SafeBytes(entity))	
 }
 
-func processBrush(line string, brush *[]CBRUSH, tmpBrush [1]CBRUSH, brushNum int32, fl [3]float32, num [3]int32, TexelDup [MAXTEXDUP]CTEX, header CHEAD) {
+func processBrush(line string, brush *[]CBRUSH, tmpBrush [1]CBRUSH, brushNum int32, fl [3]float32, num [3]int32, TexelDup *[MAXTEXDUP]CTEX, header *CHEAD) {
 	//parse main line into tmp struct
 	cnt, err := fmt.Sscanf(line, "( %d %d %d ) ( %d %d %d ) ( %d %d %d ) %s %d %d %f %f %f", &tmpBrush[0].Planes[0], &tmpBrush[0].Planes[1], &tmpBrush[0].Planes[2], &tmpBrush[0].Planes[3], &tmpBrush[0].Planes[4], &tmpBrush[0].Planes[5], &tmpBrush[0].Planes[6], &tmpBrush[0].Planes[7], &tmpBrush[0].Planes[8], &tmpBrush[0].Texel[0], &num[0], &num[1], &fl[2], &fl[0], &fl[1])
 	if err != nil {
@@ -215,9 +216,9 @@ func processBrush(line string, brush *[]CBRUSH, tmpBrush [1]CBRUSH, brushNum int
 			(*brush)[brushNum].ScaleX[(*brush)[brushNum].FaceCount] = fl[0]
 			(*brush)[brushNum].ScaleY[(*brush)[brushNum].FaceCount] = fl[1]
 			//update global texels array
-			TexelDup[header.TexelCount].Path = tmpBrush[0].Texel[0]
+			(*TexelDup)[header.TexelCount].Path = tmpBrush[0].Texel[0]
 			//upd tx cnt
-			header.TexelCount++
+			(*header).TexelCount++
 			//upd struct fc cnt
 			(*brush)[brushNum].FaceCount++
 		}
